@@ -1,0 +1,72 @@
+# 🔹 General
+.DS_Store
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+Thumbs.db
+
+# 🔹 Python (Backend)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+.env.local
+*.sqlite3
+instance/
+
+# 🔹 Node.js (Frontend or API Gateway)
+node_modules/
+npm-debug.log*
+yarn-error.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+dist/
+build/
+
+# 🔹 Embeddings & Vector Databases (Pinecone, FAISS, ChromaDB, Weaviate)
+*.faiss
+*.chroma/
+chroma_index/
+*.bin
+*.jsonl
+*.parquet
+vector_db/
+
+# 🔹 LLM Models (Local, Hugging Face, or OpenAI)
+models/
+model_weights/
+*.onnx
+*.pth
+*.ckpt
+*.tflite
+*.h5
+*.hdf5
+
+# 🔹 Docker & Cloud Deployments
+docker-compose.override.yml
+*.dockerenv
+*.dockerignore
+
+# 🔹 Linting & Formatting
+.eslintcache
+.prettierignore
+.mypy_cache/
+pytest_cache/
+
+# 🔹 Jupyter Notebooks (if used for experiments)
+.ipynb_checkpoints/
+
+# 🔹 AI-Specific Libraries (Hugging Face, LangChain, etc.)
+huggingface_cache/
+transformers_cache/
+datasets_cache/
+llama_index_cache/
