@@ -4,10 +4,17 @@ from document_loader import load_documents
 from embeddings import store_embeddings
 from retriever import query_document
 from llm import generate_response
+from fastapi.middleware.cors import CORSMiddleware
 import chromadb
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Change to specific frontend URL for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Ensure the data folder exists
 os.makedirs("data", exist_ok=True)
 
