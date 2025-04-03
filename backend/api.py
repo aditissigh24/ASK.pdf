@@ -46,5 +46,5 @@ async def ask_question(question: str):
     
     context = query_document(question, collection)  # Fetch relevant context
     response = generate_response(question, context)  # Pass to LLM
-    
+    print(context)
     return {"answer": response}

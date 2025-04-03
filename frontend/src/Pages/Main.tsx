@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Send, Upload } from "lucide-react";
 import { Sidebar } from "../Components/Sidebar";
 
@@ -22,6 +22,12 @@ export default function Main() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Keep a reference to the local message state
+  const pendingMessagesRef = useRef<{ [chatId: string]: Message[] }>({});
+
+  useEffect(() => {
+    console.log("Chats updated:", chats);
+  }, [chats]);
 
   const handleNewChat = () => {
     const newChat: Chat = {
@@ -35,35 +41,40 @@ export default function Main() {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
-    setChats(
-      chats.map((chat) => {
-        if (chat.id === currentChat) {
-          return {
-            ...chat,
-            title:
-              chat.messages.length === 0
-                ? input.slice(0, 30) + "..."
-                : chat.title,
-            messages: [
-              ...chat.messages,
-              {
-                id: Date.now().toString(),
-                content: input,
-                isUser: true,
-              },
-            ],
-          };
-        }
-        return chat;
-      })
-    );
+    const userInput = input.trim();
     setInput("");
     setIsTyping(true);
     setError(null);
+
+    // Create user message
+    const userMessage: Message = {
+      id: `user-${Date.now().toString()}`,
+      content: userInput,
+      isUser: true,
+    };
+
+    // Add the message to our pending messages reference
+    if (!pendingMessagesRef.current[currentChat]) {
+      pendingMessagesRef.current[currentChat] = [];
+    }
+    pendingMessagesRef.current[currentChat].push(userMessage);
+
+    // Update state with user message immediately for UI
+    setChats((prevChats) => {
+      return prevChats.map((chat) => {
+        if (chat.id === currentChat) {
+          return {
+            ...chat,
+            messages: [...chat.messages, userMessage],
+          };
+        }
+        return chat;
+      });
+    });
+
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/ask/?question=${encodeURIComponent(input)}`,
+        `http://127.0.0.1:8000/ask/?question=${encodeURIComponent(userInput)}`,
         {
           method: "GET",
           mode: "cors",
@@ -75,28 +86,49 @@ export default function Main() {
       }
 
       const data = await response.json();
-      console.log("API Response:", data); // Debugging
+      console.log("API Response:", data);
+
       if (!data.answer || !data.answer.content) {
         throw new Error("Invalid response format");
       }
-      setChats(
-        chats.map((chat) => {
+
+      // Create AI response message
+      const aiMessage: Message = {
+        id: `ai-${Date.now().toString()}`,
+        content: data.answer.content,
+        isUser: false,
+      };
+
+      // Add the AI message to our pending messages
+      pendingMessagesRef.current[currentChat].push(aiMessage);
+
+      // Update state with both user and AI messages from our reference
+      setChats((prevChats) => {
+        return prevChats.map((chat) => {
           if (chat.id === currentChat) {
+            // Get the current messages without our pending ones
+            const baseMessages = chat.messages.filter(
+              (msg) =>
+                !pendingMessagesRef.current[currentChat].some(
+                  (pendingMsg) => pendingMsg.id === msg.id
+                )
+            );
+
+            // Combine base messages with all pending messages
             return {
               ...chat,
               messages: [
-                ...chat.messages,
-                {
-                  id: Date.now().toString(),
-                  content: data.answer.content,
-                  isUser: false,
-                },
+                ...baseMessages,
+                ...pendingMessagesRef.current[currentChat],
               ],
             };
           }
           return chat;
-        })
-      );
+        });
+      });
+
+      // Clear pending messages for this chat
+      pendingMessagesRef.current[currentChat] = [];
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error:", err);
@@ -104,32 +136,6 @@ export default function Main() {
       setIsTyping(false);
     }
   };
-
-  //   const simulateResponse = () => {
-  //     setIsTyping(true);
-  //     setTimeout(() => {
-  //       setChats(
-  //         chats.map((chat) => {
-  //           if (chat.id === currentChat) {
-  //             return {
-  //               ...chat,
-  //               messages: [
-  //                 ...chat.messages,
-  //                 {
-  //                   id: Date.now().toString(),
-  //                   content:
-  //                     "This is a simulated response. In a real application, this would be replaced with an actual AI response.",
-  //                   isUser: false,
-  //                 },
-  //               ],
-  //             };
-  //           }
-  //           return chat;
-  //         })
-  //       );
-  //       setIsTyping(false);
-  //     }, 1500);
-  //   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,8 +161,8 @@ export default function Main() {
       const data = await response.json();
 
       // Add a system message about successful upload
-      setChats(
-        chats.map((chat) => {
+      setChats((prevChats) => {
+        return prevChats.map((chat) => {
           if (chat.id === currentChat) {
             return {
               ...chat,
@@ -173,8 +179,8 @@ export default function Main() {
             };
           }
           return chat;
-        })
-      );
+        });
+      });
     } catch (err) {
       setError(
         err instanceof Error
@@ -191,6 +197,24 @@ export default function Main() {
 
   const getCurrentChat = () => chats.find((chat) => chat.id === currentChat);
 
+  // Calculate displayed messages including pending ones
+  const getDisplayMessages = () => {
+    const chat = getCurrentChat();
+    if (!chat) return [];
+
+    const pendingMessages = pendingMessagesRef.current[currentChat] || [];
+    const displayMessages = [...chat.messages];
+
+    // Add any pending messages that aren't already in the chat
+    pendingMessages.forEach((pendingMsg) => {
+      if (!displayMessages.some((msg) => msg.id === pendingMsg.id)) {
+        displayMessages.push(pendingMsg);
+      }
+    });
+
+    return displayMessages;
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
@@ -203,7 +227,7 @@ export default function Main() {
       <div className="flex-1 flex flex-col">
         {/* Messages */}
         <div className="flex-1 overflow-auto p-6 space-y-6">
-          {getCurrentChat()?.messages.map((message) => (
+          {getDisplayMessages().map((message) => (
             <div
               key={message.id}
               className={`flex ${
