@@ -1,0 +1,25 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+
+# PDF Processing
+langchain
+langchain-community
+langchain-google-genai
+pypdf
+
+# Embeddings
+sentence-transformers
+huggingface-hub
+
+# Vector Database
+chromadb
+
+# Google Gemini API
+google-generativeai
+
+# Optional dependencies
+numpy
+torch
+transformers

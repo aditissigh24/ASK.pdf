@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Send, Upload } from "lucide-react";
 import { Sidebar } from "../Components/Sidebar";
 
@@ -23,7 +23,7 @@ export default function Main() {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Keep a reference to the local message state
-  const pendingMessagesRef = useRef<{ [chatId: string]: Message[] }>({});
+  // const pendingMessagesRef = useRef<{ [chatId: string]: Message[] }>({});
 
   useEffect(() => {
     console.log("Chats updated:", chats);
@@ -52,12 +52,6 @@ export default function Main() {
       content: userInput,
       isUser: true,
     };
-
-    // Add the message to our pending messages reference
-    if (!pendingMessagesRef.current[currentChat]) {
-      pendingMessagesRef.current[currentChat] = [];
-    }
-    pendingMessagesRef.current[currentChat].push(userMessage);
 
     // Update state with user message immediately for UI
     setChats((prevChats) => {
@@ -99,36 +93,18 @@ export default function Main() {
         isUser: false,
       };
 
-      // Add the AI message to our pending messages
-      pendingMessagesRef.current[currentChat].push(aiMessage);
-
-      // Update state with both user and AI messages from our reference
+      // Update state with AI message
       setChats((prevChats) => {
         return prevChats.map((chat) => {
           if (chat.id === currentChat) {
-            // Get the current messages without our pending ones
-            const baseMessages = chat.messages.filter(
-              (msg) =>
-                !pendingMessagesRef.current[currentChat].some(
-                  (pendingMsg) => pendingMsg.id === msg.id
-                )
-            );
-
-            // Combine base messages with all pending messages
             return {
               ...chat,
-              messages: [
-                ...baseMessages,
-                ...pendingMessagesRef.current[currentChat],
-              ],
+              messages: [...chat.messages, aiMessage],
             };
           }
           return chat;
         });
       });
-
-      // Clear pending messages for this chat
-      pendingMessagesRef.current[currentChat] = [];
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error:", err);
@@ -197,22 +173,10 @@ export default function Main() {
 
   const getCurrentChat = () => chats.find((chat) => chat.id === currentChat);
 
-  // Calculate displayed messages including pending ones
+  // No more need for complex display message calculations
   const getDisplayMessages = () => {
     const chat = getCurrentChat();
-    if (!chat) return [];
-
-    const pendingMessages = pendingMessagesRef.current[currentChat] || [];
-    const displayMessages = [...chat.messages];
-
-    // Add any pending messages that aren't already in the chat
-    pendingMessages.forEach((pendingMsg) => {
-      if (!displayMessages.some((msg) => msg.id === pendingMsg.id)) {
-        displayMessages.push(pendingMsg);
-      }
-    });
-
-    return displayMessages;
+    return chat ? chat.messages : [];
   };
 
   return (
