@@ -12,6 +12,8 @@ pypdf
 # Embeddings
 sentence-transformers
 huggingface-hub
+huggingface_hub[hf_xet]
+
 
 # Vector Database
 chromadb
