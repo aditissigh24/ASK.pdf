@@ -6,6 +6,7 @@ python-multipart
 # PDF Processing
 langchain
 langchain-community
+langchain_huggingface
 langchain-google-genai
 pypdf
 
