@@ -68,7 +68,9 @@ export default function Main() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/ask/?question=${encodeURIComponent(userInput)}`,
+        `https://ask-pdf-a8qa.onrender.com/ask/?question=${encodeURIComponent(
+          userInput
+        )}`,
         {
           method: "GET",
           mode: "cors",
@@ -124,11 +126,14 @@ export default function Main() {
     setError(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/upload/", {
-        method: "POST",
-        mode: "cors",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://ask-pdf-a8qa.onrender.com/upload/",
+        {
+          method: "POST",
+          mode: "cors",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to upload file");
