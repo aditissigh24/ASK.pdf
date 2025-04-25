@@ -17,7 +17,7 @@ __pycache__
 *.pyo
 *.pyd
 venv/
-.env
+**/.env
 .env.local
 *.sqlite3
 instance/
