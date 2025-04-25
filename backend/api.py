@@ -28,26 +28,31 @@ has_documents = False
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
-    """Uploads a PDF and processes embeddings with ChromaDB."""
-    global documents, chroma_client, has_documents
+    try:
+        """Uploads a PDF and processes embeddings with ChromaDB."""
+        global documents, chroma_client, has_documents
 
-    # Validate file type
-    if not file.filename.endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+        # Validate file type
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
-    # Save the uploaded PDF
-    file_path = f"data/{file.filename}"
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
+        # Save the uploaded PDF
+        file_path = f"data/{file.filename}"
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
 
-    # Load and store embeddings in ChromaDB
-    documents = load_documents("data/")
-    chroma_client = store_embeddings(documents)
-    
-    # Set flag indicating documents are available
-    has_documents = True
+        # Load and store embeddings in ChromaDB
+        documents = load_documents("data/")
+        chroma_client = store_embeddings(documents)
+        
+        # Set flag indicating documents are available
+        has_documents = True
 
-    return {"message": f"{file.filename} uploaded and indexed successfully. You can now ask questions about this document."}
+        return {"message": f"{file.filename} uploaded and indexed successfully. You can now ask questions about this document."}
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
 
 @app.get("/ask/")
 async def ask_question(question: str):
